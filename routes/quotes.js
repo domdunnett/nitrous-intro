@@ -109,14 +109,11 @@ exports.register = function(server, options, next) {
         db.splice(request.params.id, 1);
         reply("Quote with id " + request.params.id + " has been deleted.");
       }
-<<<<<<< HEAD
-=======
     },
     //Deliver a random request
     {
       method: 'GET',
       path: ''
->>>>>>> 55be538130c3ee8060dc980fc485e2b6373e9bf3
     }
   ]);
   next();
