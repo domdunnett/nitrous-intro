@@ -113,7 +113,21 @@ exports.register = function(server, options, next) {
     //Deliver a random request
     {
       method: 'GET',
-      path: ''
+      path: '/quotes/random',
+      handler: function(request, reply) {
+        var id = Math.floor(Math.random()*db.length);
+        reply(db[id]);
+      }
+    },
+    //Update a quote
+    {
+      method: 'PUT',
+      path: '/quotes/{quote_id}/edit',
+      handler: function(request, reply) {
+        var id = Number(request.params.quote_id);
+        db[id] = request.payload;
+        reply(db[id]);
+      }
     }
   ]);
   next();
