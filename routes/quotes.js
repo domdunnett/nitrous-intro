@@ -18,7 +18,6 @@ exports.register = function(server, options, next) {
           if (err) {throw err;}
           reply(result);
         });
-        reply();
       }
     },
     //Get one quote
@@ -26,11 +25,15 @@ exports.register = function(server, options, next) {
       method: 'GET',
       path: '/quotes/{quote_id}',
       handler: function(request, reply) {
-        var id = Number(request.params.quote_id);
-        if (isNaN(id)) {
-          return reply("That is not a valid quote ID").code(404);
-        }
-        reply(db[id]);
+        var id = encodeURIComponent(request.params.quote_id);
+        var db = request.server.plugins['hapi-mongodb'].db;
+        var ObjectID = request.server.plugins['hapi-mongodb'].ObjectID;
+        var newQuote = request.payload.quote;
+        
+        db.collection('quotes').findOne( {"_id": ObjectID(id)}, function(err, quote) {
+          if (err) { throw err; }
+          reply(quote);
+        });
       }
     },
     //Add a new quote
@@ -38,38 +41,12 @@ exports.register = function(server, options, next) {
       method: 'POST',
       path: '/quotes',
       handler: function(request, reply) {
-        db.push(request.payload);
-        reply(request.payload);
-      }
-    },
-    //Update a quote
-    {
-      method: 'PUT',
-      path: '/quotes/{id}',
-      handler: function(request, reply) {
-        request.payload;
-        reply(request.payload);
-      }
-    },
-    //Delete a quote
-    {
-      method: 'DELETE',
-      path: '/quotes/{id}',
-      handler: function(request, reply) {
-        if (db.length <= request.params.id) {
-          return reply('No quote found.').code(404);
-        }
-        db.splice(request.params.id, 1);
-        reply("Quote with id " + request.params.id + " has been deleted.");
-      }
-    },
-    //Deliver a random request
-    {
-      method: 'GET',
-      path: '/quotes/random',
-      handler: function(request, reply) {
-        var id = Math.floor(Math.random()*db.length);
-        reply(db[id]);
+        var db = request.server.plugins['hapi-mongodb'].db;
+        var newQuote = request.payload.quote;
+        db.collection('quotes').insert(newQuote, function(err, writeResult) {
+          if (err) { reply(Hapi.error.internal('Internal MongoDB Error', err)); }
+          else { reply(writeResult); }  
+        });  
       }
     },
     //Update a quote
@@ -77,10 +54,47 @@ exports.register = function(server, options, next) {
       method: 'PUT',
       path: '/quotes/{quote_id}/edit',
       handler: function(request, reply) {
-        var id = Number(request.params.quote_id);
-        db[id] = request.payload;
-        reply(db[id]);
+        var db = request.server.plugins['hapi-mongodb'].db;
+        var id = encodeURIComponent(request.params.quote_id);
+        var ObjectID = request.server.plugins['hapi-mongodb'].ObjectID;
+        var newQuote = request.payload.quote;
+        
+        db.collection('quotes').update({"_id": ObjectID(id)}, { $set: newQuote }, function(err,         result) {
+          if (err) { throw err; }
+          reply(newQuote);
+        });
+        reply(newQuote);
       }
+    },
+    //Delete a quote
+    {
+      method: 'DELETE',
+      path: '/quotes/{quote_id}',
+      handler: function(request, reply) {
+        var db = request.server.plugins['hapi-mongodb'].db;
+        var id = encodeURIComponent(request.params.quote_id);
+        var ObjectID = request.server.plugins['hapi-mongodb'].ObjectID;
+        
+        db.collection('quotes').remove( {"_id": ObjectID(id)}, true );
+        reply("Quote with id " + id + " has been deleted.");
+      }
+    },
+    //Deliver a random request
+    {
+      method: 'GET',
+      path: '/quotes/random',
+      handler: function(request, reply) {
+        var quoteArray = [];
+        var db = request.server.plugins['hapi-mongodb'].db;
+        db.collection('quotes').find().toArray(function(err, result) {
+          if (err) {throw err;}
+          else {
+            quoteArray = result;
+            var randomId = Math.floor(Math.random()*quoteArray.length);
+            reply(quoteArray[randomId]);
+          }
+        });
+      }   
     }
   ]);
   next();
