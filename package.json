@@ -1,4 +1,3 @@
-
 {
   "name": "HapiJS",
   "version": "1.0.0",
@@ -13,6 +12,7 @@
   "author": "Dom Dunnett",
   "license": "ISC",
   "dependencies": {
-    "hapi": "^8.4.0"
+    "hapi": "^8.4.0",
+    "hapi-mongodb": "^3.0.0"
   }
 }
