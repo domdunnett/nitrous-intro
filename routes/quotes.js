@@ -95,6 +95,22 @@ exports.register = function(server, options, next) {
           }
         });
       }   
+    },
+    //Request an author query
+    {
+      method: 'GET',
+      path: '/quotes/search/{searchQuery}',
+      handler: function(request, reply) {
+        var query = { $text: { $search: request.params.searchQuery }};
+        var db = request.server.plugins['hapi-mongodb'].db;
+        
+        db.collection('quotes').find(query).toArray(function(err, result) {
+          if (err) {throw err;}
+          else {
+            reply(result);
+          }
+        });
+      }
     }
   ]);
   next();
